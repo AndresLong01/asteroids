@@ -5,6 +5,7 @@ const FPS = 30; //fps
 const shipSize = 30; //in px
 const rotationSpeed = 360;
 const acceleration = 5; //in px/s^2
+const friction = 0.7; //fric coeff
 
 let ship = {
   x: canvas.width/2,
@@ -21,6 +22,8 @@ let ship = {
   }
 }
 
+let asteroids
+
 const update = () => {
   //background 
   ctx.fillStyle = "#000020";
@@ -30,7 +33,31 @@ const update = () => {
   if (ship.accel) {
     ship.thrust.x += acceleration * Math.cos(ship.angle) / FPS;
     ship.thrust.y -= acceleration * Math.sin(ship.angle) / FPS;
+    //animation
+    ctx.fillStyle = "#FF9233"
+    ctx.strokeStyle = "#500000"
+    ctx.lineWidth = shipSize / 20;
+    ctx.beginPath();
+    ctx.moveTo(
+      ship.x - ship.radius * (2 / 3 * Math.cos(ship.angle) + 0.75 * Math.sin(ship.angle)),
+      ship.y + ship.radius * (2 / 3 * Math.sin(ship.angle) - 0.75 * Math.cos(ship.angle))
+      );
+    ctx.lineTo(
+      ship.x - 5 / 3 * ship.radius * Math.cos(ship.angle),
+      ship.y + 5 / 3 * ship.radius * Math.sin(ship.angle)
+    );
+    ctx.lineTo(
+      ship.x - ship.radius * (2 / 3 * Math.cos(ship.angle) - 0.75 * Math.sin(ship.angle)),
+      ship.y + ship.radius * (2 / 3 * Math.sin(ship.angle) + 0.75 * Math.cos(ship.angle))
+    );
+    ctx.closePath()
+    ctx.fill()
+    ctx.stroke()
+  } else {
+    ship.thrust.x -= friction * ship.thrust.x /FPS
+    ship.thrust.y -= friction * ship.thrust.y /FPS
   }
+
   //ship logic
   ctx.strokeStyle = "#FEFEFE"
   ctx.lineWidth = shipSize / 20;
@@ -55,8 +82,22 @@ const update = () => {
   ship.x += ship.thrust.x;
   ship.y += ship.thrust.y;
 
-  ctx.fillStyle = "red"
-  ctx.fillRect(ship.x -1, ship.y -1, 2, 2)
+  //edge of screen
+  if(ship.x < 0 - ship.radius){
+    ship.x = canvas.width + ship.radius;
+  } else if(ship.x > canvas.width + ship.radius){
+    ship.x = 0 - ship.radius
+  }
+
+  if(ship.y < 0 - ship.radius){
+    ship.y = canvas.height + ship.radius;
+  } else if(ship.y > canvas.height + ship.radius){
+    ship.y = 0 - ship.radius
+  }
+
+
+  // ctx.fillStyle = "red"
+  // ctx.fillRect(ship.x -1, ship.y -1, 2, 2)
 }
 
 const movementHandler = (e) => {
