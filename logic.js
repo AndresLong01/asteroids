@@ -1,11 +1,17 @@
 const canvas = document.querySelector("#game")
 let ctx = canvas.getContext("2d");
 
-const FPS = 30; //fps
+//Ship constants
+const FPS = 60; //fps
 const shipSize = 30; //in px
 const rotationSpeed = 360;
 const acceleration = 5; //in px/s^2
 const friction = 0.7; //fric coeff
+
+//Asteroid constants
+const asteroidNum = 4;
+const asteroidSpeed = 25;
+const asteroidSize = 50;
 
 let ship = {
   x: canvas.width/2,
@@ -22,7 +28,7 @@ let ship = {
   }
 }
 
-let asteroids
+let asteroids = [];
 
 const update = () => {
   //background 
@@ -82,6 +88,29 @@ const update = () => {
   ship.x += ship.thrust.x;
   ship.y += ship.thrust.y;
 
+  // asteroids drawn
+  ctx.strokeStyle = "#FEFEFE";
+  ctx.lineWidth = shipSize / 20;
+  let x, y, r, a;
+  for(i=0; i< asteroids.length; i++){
+    x = asteroids[i].x
+    y = asteroids[i].y
+    r = asteroids[i].r
+    a = asteroids[i].a
+    
+    ctx.beginPath();
+    // ctx.moveTo(
+    //   x + r * Math.cos(a),
+    //   y + r * Math.sin(a)
+    // )
+    // ctx.lineTo(
+    //   x,
+    //   y
+    // )
+    ctx.arc(x, y, r, 0, 2*Math.PI, false)
+    ctx.stroke()
+  }
+
   //edge of screen
   if(ship.x < 0 - ship.radius){
     ship.x = canvas.width + ship.radius;
@@ -94,10 +123,6 @@ const update = () => {
   } else if(ship.y > canvas.height + ship.radius){
     ship.y = 0 - ship.radius
   }
-
-
-  // ctx.fillStyle = "red"
-  // ctx.fillRect(ship.x -1, ship.y -1, 2, 2)
 }
 
 const movementHandler = (e) => {
@@ -135,8 +160,32 @@ const movementStop = (e) => {
   }
 }
 
+const newAsteroid = (coordX, coordY) => {
+  var roid = {
+    x: coordX,
+    y: coordY,
+    xv: Math.random() * asteroidSpeed / FPS * (Math.random() < .5 ? 1 : -1),
+    yv: Math.random() * asteroidSpeed / FPS * (Math.random() < .5 ? 1 : -1),
+    r: asteroidSize / 2,
+    a: Math.random() * 2 * Math.PI 
+  }
+
+  return roid
+}
+
+const createAsteroids = () => {
+  asteroids = [];
+  let x, y;
+  for (i=0; i< asteroidNum; i++) {
+    x = Math.random() * canvas.width
+    y = Math.random() * canvas.height
+    asteroids.push(newAsteroid(x, y))
+  }
+}
 //Input handler
 document.addEventListener("keydown", movementHandler);
 document.addEventListener("keyup", movementStop);
 
+//Initializers
+createAsteroids();
 setInterval(update, 1000/ FPS)
