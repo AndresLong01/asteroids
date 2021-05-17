@@ -9,9 +9,11 @@ const acceleration = 5; //in px/s^2
 const friction = 0.7; //fric coeff
 
 //Asteroid constants
-const asteroidNum = 4;
+const asteroidNum = 5;
+const asteroidSize = 100;
 const asteroidSpeed = 25;
-const asteroidSize = 50;
+const asteroidVert = 10; //maximum sides per asteroid
+const asteroidJaggy = 0.3; //Jaggedness 
 
 let ship = {
   x: canvas.width/2,
@@ -91,24 +93,52 @@ const update = () => {
   // asteroids drawn
   ctx.strokeStyle = "#FEFEFE";
   ctx.lineWidth = shipSize / 20;
-  let x, y, r, a;
+
+  let x, y, r, a, vert, offs;
   for(i=0; i< asteroids.length; i++){
-    x = asteroids[i].x
-    y = asteroids[i].y
-    r = asteroids[i].r
-    a = asteroids[i].a
-    
+
+    x = asteroids[i].x;
+    y = asteroids[i].y;
+    r = asteroids[i].r;
+    a = asteroids[i].a;
+    vert = asteroids[i].vertices;
+    offs = asteroids[i].offs;
+
     ctx.beginPath();
-    // ctx.moveTo(
-    //   x + r * Math.cos(a),
-    //   y + r * Math.sin(a)
-    // )
-    // ctx.lineTo(
-    //   x,
-    //   y
-    // )
-    ctx.arc(x, y, r, 0, 2*Math.PI, false)
-    ctx.stroke()
+    ctx.moveTo(
+      x + r * offs[0] * Math.cos(a),
+      y + r * offs[0] * Math.sin(a)
+    );
+
+    for(var j=1; j<vert; j++){
+      // ctx.lineTo(
+      //   x + r * Math.cos(a + j * Math.PI * 2 / vert),
+      //   y + r * Math.sin(a + j * Math.Pi * 2 / vert)
+      // );
+      ctx.lineTo(
+        x + r * offs[j] * Math.cos(a + j * Math.PI * 2 / vert),
+        y + r * offs[j] * Math.sin(a + j * Math.PI * 2 / vert)
+      )
+    }
+    ctx.closePath();
+    // ctx.arc(x, y, r, 0, 2*Math.PI, false)
+    ctx.stroke();
+
+    asteroids[i].x += asteroids[i].xv
+    asteroids[i].y += asteroids[i].yv
+
+    //asteroid edge of screen
+    if(asteroids[i].x < 0 - asteroids[i].r) {
+      asteroids[i].x = canvas.width + asteroids[i].r;
+    }else if (asteroids[i].x > canvas.width + asteroids[i].r){
+      asteroids[i].x = 0 - asteroids[i].r
+    }
+
+    if(asteroids[i].y < 0 - asteroids[i].r) {
+      asteroids[i].y = canvas.height + asteroids[i].r;
+    }else if (asteroids[i].y > canvas.height + asteroids[i].r){
+      asteroids[i].y = 0 - asteroids[i].r
+    }
   }
 
   //edge of screen
@@ -167,18 +197,30 @@ const newAsteroid = (coordX, coordY) => {
     xv: Math.random() * asteroidSpeed / FPS * (Math.random() < .5 ? 1 : -1),
     yv: Math.random() * asteroidSpeed / FPS * (Math.random() < .5 ? 1 : -1),
     r: asteroidSize / 2,
-    a: Math.random() * 2 * Math.PI 
+    a: Math.random() * 2 * Math.PI,
+    vertices: Math.floor(Math.random() * (asteroidVert + 1) + asteroidVert/2),
+    offs: []
+  }
+
+  for (var i=0; i < roid.vertices; i++) {
+    roid.offs.push(Math.random() * asteroidJaggy * 2 + 1 - asteroidJaggy)
   }
 
   return roid
+}
+
+const distBetween = (x1, y1, x2, y2) => {
+  return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
 }
 
 const createAsteroids = () => {
   asteroids = [];
   let x, y;
   for (i=0; i< asteroidNum; i++) {
-    x = Math.random() * canvas.width
-    y = Math.random() * canvas.height
+    do{
+      x = Math.floor(Math.random() * canvas.width)
+      y = Math.floor(Math.random() * canvas.height)
+    } while (distBetween(ship.x, ship.y, x, y) < asteroidSize * 2 + ship.radius)
     asteroids.push(newAsteroid(x, y))
   }
 }
