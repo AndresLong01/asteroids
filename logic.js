@@ -15,6 +15,10 @@ const asteroidSpeed = 25;
 const asteroidVert = 10; //maximum sides per asteroid
 const asteroidJaggy = 0.3; //Jaggedness 
 
+
+//collision
+const boundaries = true; //show collision boundaries
+
 let ship = {
   x: canvas.width/2,
   y: canvas.height/2,
@@ -85,17 +89,24 @@ const update = () => {
   ctx.closePath()
   ctx.stroke()
 
+  //ship boundaries
+  if(boundaries) {
+    ctx.strokeStyle = "green";
+    ctx.beginPath();
+    ctx.arc(ship.x, ship.y, ship.radius, 0, Math.PI *2, false);
+    ctx.stroke();
+  }
   //ship movement
   ship.angle += ship.rotation;
   ship.x += ship.thrust.x;
   ship.y += ship.thrust.y;
 
   // asteroids drawn
-  ctx.strokeStyle = "#FEFEFE";
   ctx.lineWidth = shipSize / 20;
-
+  
   let x, y, r, a, vert, offs;
   for(i=0; i< asteroids.length; i++){
+    ctx.strokeStyle = "#FEFEFE";
 
     x = asteroids[i].x;
     y = asteroids[i].y;
@@ -124,23 +135,39 @@ const update = () => {
     // ctx.arc(x, y, r, 0, 2*Math.PI, false)
     ctx.stroke();
 
-    asteroids[i].x += asteroids[i].xv
-    asteroids[i].y += asteroids[i].yv
-
-    //asteroid edge of screen
-    if(asteroids[i].x < 0 - asteroids[i].r) {
-      asteroids[i].x = canvas.width + asteroids[i].r;
-    }else if (asteroids[i].x > canvas.width + asteroids[i].r){
-      asteroids[i].x = 0 - asteroids[i].r
+    if(boundaries) {
+      ctx.strokeStyle = "green";
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, 2*Math.PI, false);
+      ctx.stroke();
     }
-
-    if(asteroids[i].y < 0 - asteroids[i].r) {
-      asteroids[i].y = canvas.height + asteroids[i].r;
-    }else if (asteroids[i].y > canvas.height + asteroids[i].r){
-      asteroids[i].y = 0 - asteroids[i].r
+  }
+  //check for collision
+  for(var k=0; k<asteroids.length; k++){
+    if(distBetween(ship.x, ship.y, asteroids[k].x, asteroids[k].y) < ship.radius + asteroids[k].r) {
+      // console.log('collision detected')
+      explodeShip();
     }
   }
 
+  //strict asteroid movement
+  for(var j=0; j<asteroids.length; j++){
+    asteroids[j].x += asteroids[j].xv
+    asteroids[j].y += asteroids[j].yv
+
+    //asteroid edge of screen
+    if(asteroids[j].x < 0 - asteroids[j].r) {
+      asteroids[j].x = canvas.width + asteroids[j].r;
+    }else if (asteroids[j].x > canvas.width + asteroids[j].r){
+      asteroids[j].x = 0 - asteroids[j].r
+    }
+
+    if(asteroids[j].y < 0 - asteroids[j].r) {
+      asteroids[j].y = canvas.height + asteroids[j].r;
+    }else if (asteroids[j].y > canvas.height + asteroids[j].r){
+      asteroids[j].y = 0 - asteroids[j].r
+    }
+  }
   //edge of screen
   if(ship.x < 0 - ship.radius){
     ship.x = canvas.width + ship.radius;
@@ -223,6 +250,16 @@ const createAsteroids = () => {
     } while (distBetween(ship.x, ship.y, x, y) < asteroidSize * 2 + ship.radius)
     asteroids.push(newAsteroid(x, y))
   }
+}
+
+const explodeShip = () => {
+  // console.log("boom")
+  ctx.fillStyle = "orange";
+  ctx.strokeStyle = "red";
+  ctx.beginPath();
+  ctx.arc(ship.x, ship.y, ship.radius, 0, Math.PI * 2, false);
+  ctx.fill();
+  ctx.stroke();
 }
 //Input handler
 document.addEventListener("keydown", movementHandler);
