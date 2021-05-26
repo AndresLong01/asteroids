@@ -7,6 +7,7 @@ const shipSize = 30; //in px
 const rotationSpeed = 360;
 const acceleration = 5; //in px/s^2
 const friction = 0.7; //fric coeff
+const explosionAnim = 30;
 
 //Asteroid constants
 const asteroidNum = 5;
