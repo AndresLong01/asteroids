@@ -19,6 +19,8 @@ const asteroidJaggy = 0.3; //Jaggedness
 //collision
 const boundaries = false; //show collision boundaries
 
+//Laser Logic
+
 let ship = {
   x: canvas.width / 2,
   y: canvas.height / 2,
