@@ -167,7 +167,7 @@ const update = () => {
   if (!dead) {
     for (var k = 0; k < asteroids.length; k++) {
       if (distBetween(ship.x, ship.y, asteroids[k].x, asteroids[k].y) < ship.radius + asteroids[k].r) {
-        // console.log('collision detected')
+        // console.log(k)
         explodeShip();
       }
     }
