@@ -20,6 +20,8 @@ const asteroidJaggy = 0.3; //Jaggedness
 const boundaries = false; //show collision boundaries
 
 //Laser Logic
+//maybe need to limit lasers?
+const laserSpd = 300; //px/s
 
 let ship = {
   x: canvas.width / 2,
@@ -35,7 +37,10 @@ let ship = {
     y: 0
   },
 
-  explodingParam: 0
+  explodingParam: 0,
+
+  lasers: [],
+  canShoot: true
 }
 
 let asteroids = [];
@@ -113,6 +118,15 @@ const update = () => {
     ctx.arc(ship.x, ship.y, ship.radius, 0, Math.PI * 2, false);
     ctx.stroke();
   }
+
+  //ship lasers
+  for(let i = 0; i< ship.lasers.length; i ++){
+    ctx.fillStyle = "#500000";
+    ctx.beginPath()
+    ctx.arc(ship.lasers[i].x, ship.lasers[i].y, shipSize/15, 0, Math.PI * 2, false)
+    ctx.fill()
+    // ctx.stroke()
+  }
   //ship movement
 
   if (!dead) {
@@ -178,7 +192,10 @@ const update = () => {
       location.reload()
     }
   }
-
+  for (let j = 0; j<ship.lasers.length; j++){
+    ship.lasers[j].x += ship.lasers[j].xv;
+    ship.lasers[j].y += ship.lasers[j].yv;
+  }
   //strict asteroid movement
   for (var j = 0; j < asteroids.length; j++) {
     asteroids[j].x += asteroids[j].xv
@@ -209,11 +226,18 @@ const update = () => {
   } else if (ship.y > canvas.height + ship.radius) {
     ship.y = 0 - ship.radius
   }
+
+  //laser movement
+  
 }
 
 const movementHandler = (e) => {
   // console.log(e.keyCode)
   switch (e.keyCode) {
+    case 32: //space bar
+      shootLaser();
+      break;
+
     case 37: //left rotation
       ship.rotation = rotationSpeed / 180 * Math.PI / FPS;
       break;
@@ -231,6 +255,10 @@ const movementHandler = (e) => {
 
 const movementStop = (e) => {
   switch (e.keyCode) {
+    case 32: //space bar
+      ship.canShoot = true;
+      break;
+
     case 37: //let rotational stop
       ship.rotation = 0;
       break;
@@ -289,6 +317,19 @@ const explodeShip = () => {
   // 
 
 
+}
+
+const shootLaser = () => {
+  //need to put limiter here later?
+  if(ship.canShoot) {
+    ship.lasers.push({
+      x: ship.x + 4 / 3 * ship.radius * Math.cos(ship.angle),
+      y: ship.y - 4 / 3 * ship.radius * Math.sin(ship.angle),
+      xv: laserSpd * Math.cos(ship.angle) / FPS,
+      yv: -laserSpd * Math.sin(ship.angle) / FPS
+    })
+  }
+  ship.canShoot = false
 }
 //Input handler
 document.addEventListener("keydown", movementHandler);
