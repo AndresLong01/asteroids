@@ -10,9 +10,9 @@ const friction = 0.7; //fric coeff
 const explosionAnim = 30; // in frames
 
 //Asteroid constants
-const asteroidNum = 5;
+const asteroidNum = 8;
 const asteroidSize = 100;
-const asteroidSpeed = 25;
+const asteroidSpeed = 80;
 const asteroidVert = 10; //maximum sides per asteroid
 const asteroidJaggy = 0.3; //Jaggedness 
 
@@ -22,6 +22,7 @@ const boundaries = false; //show collision boundaries
 //Laser Logic
 //maybe need to limit lasers?
 const laserSpd = 300; //px/s
+const laserDist = 0.5; //max distance
 
 let ship = {
   x: canvas.width / 2,
@@ -46,6 +47,9 @@ let ship = {
 let asteroids = [];
 
 const update = () => {
+  if(asteroids.length == 0){
+    setTimeout(() => location.reload(), 3000)
+  }
   let dead = ship.explodingParam > 0;
   //background 
   ctx.fillStyle = "#000020";
@@ -120,12 +124,31 @@ const update = () => {
   }
 
   //ship lasers
-  for(let i = 0; i< ship.lasers.length; i ++){
+  for (let i = 0; i < ship.lasers.length; i++) {
     ctx.fillStyle = "#500000";
     ctx.beginPath()
-    ctx.arc(ship.lasers[i].x, ship.lasers[i].y, shipSize/15, 0, Math.PI * 2, false)
+    ctx.arc(ship.lasers[i].x, ship.lasers[i].y, shipSize / 15, 0, Math.PI * 2, false)
     ctx.fill()
     // ctx.stroke()
+  }
+
+  let ax, ay, ar, lx, ly;
+  for (let i=asteroids.length - 1; i >=0; i--) {
+    ax=asteroids[i].x;
+    ay=asteroids[i].y;
+    ar=asteroids[i].r;
+
+    for (let j = ship.lasers.length - 1; j >= 0 ;j--) {
+      lx = ship.lasers[j].x;
+      ly = ship.lasers[j].y;
+  
+      if(distBetween(ax, ay, lx, ly) < ar) {
+
+        ship.lasers.splice(j, 1);
+
+        destroyAsteroid(i)
+      }
+    }
   }
   //ship movement
 
@@ -188,14 +211,24 @@ const update = () => {
   } else {
     ship.explodingParam--;
     // ship.x maybe make spin
-    if(ship.explodingParam == 0){
+    if (ship.explodingParam == 0) {
       location.reload()
     }
   }
-  for (let j = 0; j<ship.lasers.length; j++){
+
+  //laser movement
+  for (let j = ship.lasers.length - 1; j >= 0 ;j--) {
+    if(ship.lasers[j].dist > laserDist * canvas.width) {
+      ship.lasers.splice(j, 1)
+      continue;
+    }
+
     ship.lasers[j].x += ship.lasers[j].xv;
     ship.lasers[j].y += ship.lasers[j].yv;
+
+    ship.lasers[j].dist += Math.sqrt(Math.pow(ship.lasers[j].xv, 2) + Math.pow(ship.lasers[j].yv, 2));
   }
+
   //strict asteroid movement
   for (var j = 0; j < asteroids.length; j++) {
     asteroids[j].x += asteroids[j].xv
@@ -226,9 +259,6 @@ const update = () => {
   } else if (ship.y > canvas.height + ship.radius) {
     ship.y = 0 - ship.radius
   }
-
-  //laser movement
-  
 }
 
 const movementHandler = (e) => {
@@ -274,13 +304,13 @@ const movementStop = (e) => {
   }
 }
 
-const newAsteroid = (coordX, coordY) => {
+const newAsteroid = (coordX, coordY, r) => {
   var roid = {
     x: coordX,
     y: coordY,
     xv: Math.random() * asteroidSpeed / FPS * (Math.random() < .5 ? 1 : -1),
     yv: Math.random() * asteroidSpeed / FPS * (Math.random() < .5 ? 1 : -1),
-    r: asteroidSize / 2,
+    r: r,
     a: Math.random() * 2 * Math.PI,
     vertices: Math.floor(Math.random() * (asteroidVert + 1) + asteroidVert / 2),
     offs: []
@@ -305,28 +335,41 @@ const createAsteroids = () => {
       x = Math.floor(Math.random() * canvas.width)
       y = Math.floor(Math.random() * canvas.height)
     } while (distBetween(ship.x, ship.y, x, y) < asteroidSize * 2 + ship.radius)
-    asteroids.push(newAsteroid(x, y))
+    asteroids.push(newAsteroid(x, y, Math.ceil(asteroidSize / 2)))
   }
+}
+
+const destroyAsteroid= (index) => {
+  let x = asteroids[index].x;
+  let y = asteroids[index].y;
+  let r = asteroids[index].r;
+
+  if(r == Math.ceil(asteroidSize / 2)) {
+    asteroids.push(newAsteroid(x, y, Math.ceil(asteroidSize / 4)));
+    asteroids.push(newAsteroid(x, y, Math.ceil(asteroidSize / 4)));
+  } else if (r == Math.ceil(asteroidSize / 4)) {
+    asteroids.push(newAsteroid(x, y, Math.ceil(asteroidSize / 8)));
+    asteroids.push(newAsteroid(x, y, Math.ceil(asteroidSize / 8)));
+  }
+  
+  asteroids.splice(index, 1)
 }
 
 const explodeShip = () => {
   // console.log("boom")
   // location.reload()
   ship.explodingParam = explosionAnim
-
-  // 
-
-
 }
 
 const shootLaser = () => {
   //need to put limiter here later?
-  if(ship.canShoot) {
+  if (ship.canShoot) {
     ship.lasers.push({
       x: ship.x + 4 / 3 * ship.radius * Math.cos(ship.angle),
       y: ship.y - 4 / 3 * ship.radius * Math.sin(ship.angle),
       xv: laserSpd * Math.cos(ship.angle) / FPS,
-      yv: -laserSpd * Math.sin(ship.angle) / FPS
+      yv: -laserSpd * Math.sin(ship.angle) / FPS,
+      dist: 0
     })
   }
   ship.canShoot = false
