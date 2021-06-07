@@ -125,7 +125,7 @@ const update = () => {
 
   //ship lasers
   for (let i = 0; i < ship.lasers.length; i++) {
-    ctx.fillStyle = "#500000";
+    ctx.fillStyle = "#F6019D";
     ctx.beginPath()
     ctx.arc(ship.lasers[i].x, ship.lasers[i].y, shipSize / 15, 0, Math.PI * 2, false)
     ctx.fill()
